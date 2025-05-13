@@ -14,8 +14,8 @@ RUN yarn install
 COPY . .
 
 # Exposer le port Vite
-EXPOSE 3000
+EXPOSE 5134
 
 # Lancer Vite en mode développement (accessible depuis l'extérieur du conteneur)
-CMD ["yarn", "dev", "--host"]
+CMD ["yarn", "dev", "--host", "--port", "5134"]
 

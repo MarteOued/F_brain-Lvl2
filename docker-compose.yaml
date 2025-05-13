@@ -1,0 +1,68 @@
+services:
+  server:
+    build: ./server
+    command: poetry run python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./server:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - rabbitmq
+    env_file:
+      - ./server/.env
+
+  client:
+    build: ./client
+    volumes:
+      - ./client:/app
+    ports:
+      - "5134:5134"
+    command: ["npm", "run", "dev"]
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"     # port de Celery
+      - "15672:15672"   # interface de RabbitMQ
+
+  celery:
+    build: ./server
+    command: poetry run celery -A core worker --loglevel=info
+    volumes:
+      - ./server:/app
+    depends_on:
+      - rabbitmq
+      - db
+    env_file:
+      - ./server/.env
+
+  nginx:
+    build: ./proxy
+    ports:
+      - "80:80"
+    depends_on:
+      - client
+      - server
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "3000:9090"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
