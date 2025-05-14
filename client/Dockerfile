@@ -5,7 +5,7 @@ FROM node:18
 WORKDIR /app
 
 # Copier les fichiers de dépendances
-COPY package.json yarn.lock ./
+COPY package.json ./
 
 # Installer les dépendances avec Yarn
 RUN yarn install
@@ -14,8 +14,8 @@ RUN yarn install
 COPY . .
 
 # Exposer le port Vite
-EXPOSE 5134
+EXPOSE 5174
 
 # Lancer Vite en mode développement (accessible depuis l'extérieur du conteneur)
-CMD ["yarn", "dev", "--host", "--port", "5134"]
+CMD ["yarn", "dev", "--host"]
 

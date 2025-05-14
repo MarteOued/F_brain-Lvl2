@@ -5,9 +5,9 @@ WORKDIR /app
 
 # 3. Installer poetry
 RUN pip install poetry
-
+RUN pip install django-cors-headers
 # 4. Copier fichiers
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml ./
 
 # 5. Installer dépendances
 RUN poetry config virtualenvs.create false \
