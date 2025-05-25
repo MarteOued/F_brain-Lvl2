@@ -219,6 +219,21 @@ files = [
 Django = ">=3.2"
 
 [[package]]
+name = "django-filter"
+version = "23.5"
+description = "Django-filter is a reusable Django application for allowing users to filter querysets dynamically."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "django-filter-23.5.tar.gz", hash = "sha256:67583aa43b91fe8c49f74a832d95f4d8442be628fd4c6d65e9f811f5153a4e5c"},
+    {file = "django_filter-23.5-py3-none-any.whl", hash = "sha256:99122a201d83860aef4fe77758b69dda913e874cc5e0eaa50a86b0b18d708400"},
+]
+
+[package.dependencies]
+Django = ">=3.2"
+
+[[package]]
 name = "django-prometheus"
 version = "2.3.1"
 description = "Django middlewares to monitor your application with Prometheus.io."
@@ -286,14 +301,14 @@ zookeeper = ["kazoo (>=2.8.0)"]
 
 [[package]]
 name = "prometheus-client"
-version = "0.21.1"
+version = "0.22.0"
 description = "Python client for the Prometheus monitoring system."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "prometheus_client-0.21.1-py3-none-any.whl", hash = "sha256:594b45c410d6f4f8888940fe80b5cc2521b305a1fafe1c58609ef715a001f301"},
-    {file = "prometheus_client-0.21.1.tar.gz", hash = "sha256:252505a722ac04b0456be05c05f75f45d760c2911ffc45f2a06bcaed9f3ae3fb"},
+    {file = "prometheus_client-0.22.0-py3-none-any.whl", hash = "sha256:c8951bbe64e62b96cd8e8f5d917279d1b9b91ab766793f33d4dce6c228558713"},
+    {file = "prometheus_client-0.22.0.tar.gz", hash = "sha256:18da1d2241ac2d10c8d2110f13eedcd5c7c0c8af18c926e8731f04fc10cd575c"},
 ]
 
 [package.extras]
@@ -498,5 +513,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.9"
-content-hash = "f95b4dd8511c45404a6d066cfedd7845adb6c290bfe766596ee60adb875cab3c"
+python-versions = "^3.9"
+content-hash = "eb19fbe5b430cf7cc1660411041d30cd2d8d571ea2cf512db528c34407023f39"
