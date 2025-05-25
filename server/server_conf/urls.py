@@ -21,5 +21,7 @@ urlpatterns = [
     path('', lambda request: HttpResponse("Bienvenue sur l'API Django")),
     path('', include('django_prometheus.urls')),  # ✅ Ça suffit
     path('admin/', admin.site.urls),
+    path('api/finance/', include('finance.urls')),
+    path('api-auth/', include('rest_framework.urls')),
 ]
 
