@@ -1,23 +1,26 @@
 FROM python:3.9-alpine
 
-# 2. Dossier de travail
 WORKDIR /app
 
-# 3. Installer poetry
-RUN pip install poetry
-RUN pip install django-cors-headers
-# 4. Copier fichiers
-COPY pyproject.toml ./
+# Installer les dépendances système
+RUN apk add --no-cache --virtual .build-deps \
+    gcc \
+    musl-dev \
+    postgresql-dev
 
-# 5. Installer dépendances
+# Installer les dépendances Python
+RUN pip install --no-cache-dir poetry gunicorn django-cors-headers
+RUN mkdir -p /app/staticfiles
+# Copier et installer les dépendances du projet
+COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-root
+    && poetry install --no-interaction --no-ansi --no-root
 
-# 6. Copier tout le reste
+# Copier tout le code
 COPY . .
 
-# 7. Port Django
-EXPOSE 8000
+# Configurer le bon PYTHONPATH
+ENV PYTHONPATH=/app
 
-# 8. Lancer le serveur
-CMD ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Commande corrigée pour utiliser server_conf au lieu de server_config
+CMD ["sh", "-c", "python manage.py migrate && gunicorn server_conf.wsgi:application --bind 0.0.0.0:8000"]

@@ -2,7 +2,7 @@
 FROM nginx:alpine
 
 # Copier la configuration Nginx dans le conteneur
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY default.conf /etc/nginx/default.conf
 
 # Exposer le port 80
 EXPOSE 80

@@ -17,11 +17,15 @@ from django.urls import path, include
 from django.contrib import admin
 from django.http import HttpResponse
 
+def health_check(request):
+    return HttpResponse("OK")
+
 urlpatterns = [
     path('', lambda request: HttpResponse("Bienvenue sur l'API Django")),
     path('', include('django_prometheus.urls')),  # ✅ Ça suffit
     path('admin/', admin.site.urls),
     path('api/finance/', include('finance.urls')),
+    path('health/', health_check),
     path('api-auth/', include('rest_framework.urls')),
 ]
 
