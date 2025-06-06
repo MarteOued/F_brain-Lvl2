@@ -1,7 +1,6 @@
 # Ce fichier teste automatiquement ton code à chaque push
 name: Tests Automatiques
 
-# QUAND ça se déclenche : à chaque push sur ces branches
 on:
   push:
     branches: [ master, dev, feature/* ]
@@ -12,9 +11,7 @@ jobs:
   # JOB 1: Tester le backend Django
   test-backend:
     name: "🐍 Tests Backend Django"
-    runs-on: ubuntu-latest  # Machine virtuelle Ubuntu
-    
-    # Services nécessaires (base de données)
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:13
@@ -31,35 +28,29 @@ jobs:
           - 5432:5432
 
     steps:
-    # 1. Récupérer le code depuis GitHub
     - name: "📥 Récupération du code"
       uses: actions/checkout@v4
 
-    # 2. Installer Python 3.11
     - name: "🐍 Configuration Python"
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
-    # 3. Installer les dépendances Python
     - name: "📦 Installation des dépendances"
       run: |
         cd server
         python -m pip install --upgrade pip
-        # Si tu as requirements.txt, sinon on installe Django de base
         if [ -f requirements.txt ]; then
           pip install -r requirements.txt
         else
           pip install django psycopg2-binary
         fi
 
-    # 4. Vérifier la syntaxe Python (optionnel mais recommandé)
     - name: "🔍 Vérification de la syntaxe"
       run: |
         cd server
         python -m py_compile **/*.py || echo "Quelques erreurs de syntaxe trouvées, mais on continue"
 
-    # 5. Lancer les tests Django
     - name: "🧪 Tests Django"
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
@@ -67,64 +58,54 @@ jobs:
         DJANGO_SECRET_KEY: test_secret_key_for_github_actions
       run: |
         cd server
-        # Créer les tables
         python manage.py migrate
-        # Lancer les tests (s'il y en a)
         python manage.py test || echo "Pas de tests trouvés, c'est OK"
 
   # JOB 2: Tester le frontend
   test-frontend:
     name: "⚛️ Tests Frontend"
     runs-on: ubuntu-latest
-    
+
     steps:
-    # 1. Récupérer le code
     - name: "📥 Récupération du code"
       uses: actions/checkout@v4
 
-    # 2. Installer Node.js
     - name: "📦 Configuration Node.js"
       uses: actions/setup-node@v4
       with:
         node-version: '18'
 
-    # 3. Installer les dépendances npm
-    - name: "📦 Installation des dépendances npm"
+    - name: "📦 Installation des dépendances (Yarn)"
       run: |
         cd client
-        # Vérifier si package.json existe
         if [ -f package.json ]; then
-          npm install
+          # Installer yarn globalement
+          npm install -g yarn
+          yarn install
         else
           echo "Pas de package.json trouvé, on skip"
         fi
 
-    # 4. Build du frontend pour vérifier que ça compile
     - name: "🏗️ Build du frontend"
       run: |
         cd client
         if [ -f package.json ]; then
-          # Essayer de build, sinon on skip
-          npm run build 2>/dev/null || echo "Pas de script build, on skip"
+          yarn build || echo "Pas de script build, on skip"
         fi
 
-  # JOB 3: Test Docker (pour vérifier que tout se build bien)
+  # JOB 3: Test Docker
   test-docker:
     name: "🐳 Test Docker"
     runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]  # Attend que les tests précédents passent
-    
+    needs: [test-backend, test-frontend]
+
     steps:
     - name: "📥 Récupération du code"
       uses: actions/checkout@v4
 
-    # Test que docker-compose fonctionne
     - name: "🐳 Test Docker Compose"
       run: |
-        # Vérifier que le fichier docker-compose est valide
         docker-compose config
         echo "✅ Docker Compose est valide !"
-        
-        # Essayer de build les images (sans les lancer)
         docker-compose build --no-cache
         echo "✅ Toutes les images se buildent correctement !"
