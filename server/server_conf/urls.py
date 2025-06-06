@@ -16,16 +16,20 @@ Including another URLconf
 from django.urls import path, include
 from django.contrib import admin
 from django.http import HttpResponse
+from django.conf import settings  # ← AJOUTER CETTE LIGNE
+from django.conf.urls.static import static  # ← AJOUTER CETTE LIGNE
 
 def health_check(request):
     return HttpResponse("OK")
 
 urlpatterns = [
     path('', lambda request: HttpResponse("Bienvenue sur l'API Django")),
-    path('', include('django_prometheus.urls')),  # ✅ Ça suffit
+    path('', include('django_prometheus.urls')),
     path('admin/', admin.site.urls),
     path('api/finance/', include('finance.urls')),
     path('health/', health_check),
     path('api-auth/', include('rest_framework.urls')),
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,10 +1,6 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import Home from './pages/Home';
-import Depenses from './pages/Depenses';
-import Tags from './pages/Tags';
-import Analytics from './pages/Analytics';
 
 function App() {
   return (
@@ -17,29 +13,15 @@ function App() {
             BudgetZen
           </h1>
         </div>
-        <div className="flex items-center space-x-4">
-          {/* Profil / Notifications */}
-        </div>
       </nav>
 
       <main className="container mx-auto px-4 py-8">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/depenses" element={<Depenses />} />
-          <Route path="/tags" element={<Tags />} />
-          <Route path="/analytics" element={<Analytics />} />
-        </Routes>
+        <Outlet /> {/* Ici s'affichent les routes enfants */}
       </main>
 
       <ToastContainer position="bottom-right" autoClose={3000} />
     </div>
   );
 }
-
-const NavLink = ({ to, children }) => (
-  <Link to={to} className="text-gray-600 hover:text-indigo-600 font-medium transition-colors">
-    {children}
-  </Link>
-);
 
 export default App;

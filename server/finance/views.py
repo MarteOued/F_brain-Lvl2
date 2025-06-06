@@ -3,6 +3,12 @@ from .models import Depense, Tag
 from .serializers import DepenseSerializer, TagSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.http import HttpResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
+def get_csrf(request):
+    return HttpResponse('CSRF cookie set')
 
 class DepenseViewSet(viewsets.ModelViewSet):
     serializer_class = DepenseSerializer

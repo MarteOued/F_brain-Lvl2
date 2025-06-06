@@ -1,388 +1,411 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import apiService from '../services/api';
+import './Depenses.css'; // Fichier CSS séparé pour une meilleure organisation
+import { Link } from 'react-router-dom';
 
 export default function Depenses() {
   const [depenses, setDepenses] = useState([]);
+  const [tags, setTags] = useState([]);
   const [form, setForm] = useState({ 
     date: new Date().toISOString().split('T')[0], 
     description: '', 
-    montant: '', 
+    amount: '', 
     tag: '' 
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Charger les dépenses depuis localStorage au montage
   useEffect(() => {
-    const savedDepenses = localStorage.getItem('depenses');
-    if (savedDepenses) {
-      setDepenses(JSON.parse(savedDepenses));
-    }
+    loadData();
   }, []);
 
-  // Sauvegarder les dépenses dans localStorage à chaque modification
-  useEffect(() => {
-    localStorage.setItem('depenses', JSON.stringify(depenses));
-  }, [depenses]);
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [depensesRes, tagsRes] = await Promise.allSettled([
+        apiService.getDepenses(),
+        apiService.getTags()
+      ]);
 
-  const ajouterDepense = () => {
-    if (!form.description || !form.montant || !form.tag) {
+      if (depensesRes.status === 'fulfilled') {
+        setDepenses(depensesRes.value.data);
+      } else {
+        console.error('Erreur dépenses:', depensesRes.reason);
+        toast.error('Erreur de chargement des dépenses');
+      }
+
+      if (tagsRes.status === 'fulfilled') {
+        setTags(tagsRes.value.data);
+      } else {
+        console.error('Erreur tags:', tagsRes.reason);
+        toast.error('Erreur de chargement des tags');
+      }
+    } catch (error) {
+      console.error('Erreur chargement:', error);
+      toast.error('Erreur de connexion API');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const ajouterDepense = async (e) => {
+    e.preventDefault();
+    
+    if (!form.description || !form.amount || !form.tag) {
       toast.error("Tous les champs sont obligatoires");
       return;
     }
 
-    const nouvelleDepense = {
-      ...form,
-      id: Date.now(),
-      montant: parseFloat(form.montant).toFixed(2)
-    };
+    try {
+      setIsLoading(true);
+      const nouvelleDepense = await apiService.createDepense({
+        amount: parseFloat(form.amount).toFixed(2),
+        description: form.description,
+        date: form.date,
+        tag_names: [form.tag]
+      });
 
-    setDepenses(prev => [nouvelleDepense, ...prev]);
-    setForm({ ...form, description: '', montant: '', tag: '' });
-    toast.success("Dépense ajoutée avec succès !");
+      setDepenses(prev => [nouvelleDepense.data, ...prev]);
+      setForm({ ...form, description: '', amount: '', tag: '' });
+      toast.success("Dépense ajoutée avec succès !");
+    } catch (error) {
+      console.error('Erreur ajout:', error);
+      toast.error(error.response?.data?.detail || 'Erreur lors de l\'ajout');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const supprimerDepense = (id) => {
-    setDepenses(prev => prev.filter(depense => depense.id !== id));
-    toast.success("Dépense supprimée avec succès !");
+  const supprimerDepense = async (id) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) return;
+    
+    try {
+      setIsLoading(true);
+      await apiService.deleteDepense(id);
+      setDepenses(prev => prev.filter(depense => depense.id !== id));
+      toast.success("Dépense supprimée avec succès !");
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      toast.error('Erreur de suppression');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Filtrer les dépenses selon l'onglet actif et la recherche
+  const filteredDepenses = depenses.filter(depense => {
+    const matchesSearch = depense.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (depense.tags?.[0]?.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    if (activeTab === 'all') return matchesSearch;
+    if (activeTab === 'recent') {
+      const depenseDate = new Date(depense.date);
+      const today = new Date();
+      const lastMonth = new Date(today.setMonth(today.getMonth() - 1));
+      return matchesSearch && depenseDate >= lastMonth;
+    }
+    return matchesSearch && depense.tags?.[0]?.name === activeTab;
+  });
+
+  // Calculer le total des dépenses affichées
+  const totalAmount = filteredDepenses.reduce((sum, depense) => sum + parseFloat(depense.amount), 0);
 
   return (
-    <>
-      <div className="container">
-        <h1 className="page-title">📋 Gestion des Dépenses</h1>
+    <div className="depenses-app">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h1 className="app-logo">💰 Gestion</h1>
+        </div>
         
-        <section className="form-section">
-          <h2 className="section-title">➕ Ajouter une dépense</h2>
-          
-          <form 
-            onSubmit={e => { e.preventDefault(); ajouterDepense(); }} 
-            className="form-grid"
-          >
-            <div className="form-group">
-              <label>Date</label>
-              <input 
-                type="date" 
-                value={form.date}
-                onChange={e => setForm({...form, date: e.target.value})}
-                className="input"
-              />
+        <nav className="sidebar-nav">
+          <Link to="/" className="nav-item">
+            <span className="nav-icon">🏠</span>
+            <span className="nav-text">Accueil</span>
+          </Link>
+          <Link to="/depenses" className="nav-item active">
+            <span className="nav-icon">💸</span>
+            <span className="nav-text">Dépenses</span>
+          </Link>
+          <Link to="/tags" className="nav-item">
+            <span className="nav-icon">🏷️</span>
+            <span className="nav-text">Catégories</span>
+          </Link>
+          <Link to="/analytics" className="nav-item">
+            <span className="nav-icon">📊</span>
+            <span className="nav-text">Analytiques</span>
+          </Link>
+          <Link to="/budgets" className="nav-item">
+            <span className="nav-icon">🎯</span>
+            <span className="nav-text">Budgets</span>
+          </Link>
+        </nav>
+        
+        <div className="sidebar-footer">
+          <div className="user-profile">
+            <div className="avatar">👤</div>
+            <div className="user-info">
+              <span className="username">Utilisateur</span>
+              <span className="user-email">user@example.com</span>
             </div>
-            
-            <div className="form-group">
-              <label>Description</label>
-              <input
-                type="text"
-                placeholder="Repas, transport..."
-                value={form.description}
-                onChange={e => setForm({...form, description: e.target.value})}
-                className="input"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Montant (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={form.montant}
-                onChange={e => setForm({...form, montant: e.target.value})}
-                className="input"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Catégorie</label>
-              <input
-                type="text"
-                placeholder="Alimentation, loisirs..."
-                value={form.tag}
-                onChange={e => setForm({...form, tag: e.target.value})}
-                className="input"
-              />
-            </div>
-
-            <div className="form-group full-width">
-              <button type="submit" className="btn-primary">Enregistrer la dépense</button>
-            </div>
-          </form>
-        </section>
-
-        <section className="history-section">
-          <h2 className="section-title">📜 Historique des dépenses</h2>
-          
-          <div className="table-wrapper">
-            <table className="depenses-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Montant</th>
-                  <th>Catégorie</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {depenses.length > 0 ? (
-                  depenses.map(depense => (
-                    <tr key={depense.id} className="depense-row">
-                      <td>{depense.date}</td>
-                      <td>{depense.description}</td>
-                      <td className="amount">-{depense.montant} €</td>
-                      <td>
-                        <span className="tag">{depense.tag}</span>
-                      </td>
-                      <td>
-                        <button 
-                          onClick={() => supprimerDepense(depense.id)}
-                          className="btn-delete"
-                        >
-                          Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="empty-state">
-                      Aucune dépense enregistrée pour le moment
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
           </div>
-        </section>
-      </div>
+        </div>
+      </aside>
 
-      <style>{`
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-        
-        html, body, #root {
-          height: 100%;
-          width: 100%;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background-color: #f8fafc;
-          color: #1e293b;
-        }
-        
-        .container {
-          min-height: 100vh;
-          width: 100%;
-          padding: 3rem 1.5rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          margin: 0 auto;
-        }
-        
-        .page-title {
-          font-size: 3.5rem;
-          font-weight: 800;
-          color: #2563eb;
-          margin-bottom: 3rem;
-          text-align: center;
-          letter-spacing: -0.025em;
-          line-height: 1.2;
-        }
-        
-        .section-title {
-          font-size: 2.25rem;
-          font-weight: 700;
-          margin-bottom: 2rem;
-          color: #1e40af;
-          text-align: center;
-        }
-        
-        .form-section, .history-section {
-          background: white;
-          border-radius: 1.5rem;
-          box-shadow: 0 20px 40px rgba(37, 99, 235, 0.1);
-          padding: 2.5rem;
-          width: 100%;
-          max-width: 1200px;
-          margin-bottom: 3rem;
-        }
-        
-        .form-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 1.5rem;
-        }
-        
-        @media(min-width: 768px) {
-          .form-grid {
-            grid-template-columns: repeat(4, 1fr);
-          }
+      {/* Main Content */}
+      <main className="content-area">
+        {/* Header */}
+        <header className="content-header">
+          <h2 className="page-title">
+            <span className="page-icon">💸</span>
+            Gestion des Dépenses
+          </h2>
           
-          .form-group.full-width {
-            grid-column: span 4;
-            display: flex;
-            justify-content: flex-end;
-          }
-        }
-        
-        .form-group {
-          display: flex;
-          flex-direction: column;
-        }
-        
-        label {
-          font-weight: 600;
-          margin-bottom: 0.75rem;
-          color: #334155;
-          font-size: 1.125rem;
-        }
-        
-        .input {
-          padding: 1rem 1.25rem;
-          border: 2px solid #e2e8f0;
-          border-radius: 0.75rem;
-          font-size: 1.125rem;
-          transition: all 0.3s ease;
-          outline: none;
-        }
-        
-        .input:focus {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-        }
-        
-        .btn-primary {
-          background-color: #2563eb;
-          color: white;
-          padding: 1rem 2rem;
-          border: none;
-          border-radius: 0.75rem;
-          font-size: 1.25rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          width: 100%;
-          max-width: 280px;
-        }
-        
-        .btn-primary:hover {
-          background-color: #1e40af;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-        
-        .btn-delete {
-          background-color: #dc2626;
-          color: white;
-          padding: 0.5rem 1rem;
-          border: none;
-          border-radius: 0.5rem;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        
-        .btn-delete:hover {
-          background-color: #b91c1c;
-          transform: translateY(-1px);
-        }
-        
-        .table-wrapper {
-          overflow-x: auto;
-          border-radius: 1rem;
-          margin-top: 1.5rem;
-        }
-        
-        table.depenses-table {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0 0.75rem;
-          font-size: 1.125rem;
-          min-width: 800px;
-        }
-        
-        thead tr th {
-          text-align: left;
-          padding: 1.25rem 1.5rem;
-          background-color: #e0e7ff;
-          color: #1e40af;
-          font-weight: 700;
-          font-size: 1.25rem;
-          border-top-left-radius: 1rem;
-          border-top-right-radius: 1rem;
-        }
-        
-        tbody tr.depense-row {
-          background-color: white;
-          transition: all 0.3s ease;
-          border-radius: 0.75rem;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        tbody tr.depense-row:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        tbody tr.depense-row td {
-          padding: 1.25rem 1.5rem;
-          vertical-align: middle;
-        }
-        
-        tbody tr.depense-row td:first-child {
-          border-top-left-radius: 0.75rem;
-          border-bottom-left-radius: 0.75rem;
-        }
-        
-        tbody tr.depense-row td:last-child {
-          border-top-right-radius: 0.75rem;
-          border-bottom-right-radius: 0.75rem;
-        }
-        
-        .amount {
-          color: #dc2626;
-          font-weight: 700;
-          font-size: 1.25rem;
-        }
-        
-        .tag {
-          background-color: #bfdbfe;
-          color: #1e40af;
-          padding: 0.5rem 1rem;
-          border-radius: 9999px;
-          font-size: 1rem;
-          font-weight: 700;
-          display: inline-block;
-        }
-        
-        .empty-state {
-          padding: 3rem 2rem;
-          text-align: center;
-          color: #64748b;
-          font-size: 1.25rem;
-          font-style: italic;
-        }
-        
-        @media (max-width: 768px) {
-          .container {
-            padding: 2rem 1rem;
-          }
+          <div className="header-actions">
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Rechercher des dépenses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <span className="search-icon">🔍</span>
+            </div>
+            <button className="btn-export">
+              <span className="export-icon">📤</span>
+              Exporter
+            </button>
+          </div>
+        </header>
+
+        {/* Dashboard Cards */}
+        <div className="dashboard-cards">
+          <div className="stats-card total">
+            <div className="card-icon">💰</div>
+            <div className="card-content">
+              <h3>Total dépensé</h3>
+              <p>{totalAmount.toFixed(2)} €</p>
+            </div>
+          </div>
           
-          .page-title {
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-          }
+          <div className="stats-card count">
+            <div className="card-icon">📋</div>
+            <div className="card-content">
+              <h3>Nombre de dépenses</h3>
+              <p>{filteredDepenses.length}</p>
+            </div>
+          </div>
           
-          .section-title {
-            font-size: 1.75rem;
-          }
-          
-          .form-section, .history-section {
-            padding: 1.5rem;
-          }
-        }
-      `}</style>
-    </>
+          <div className="stats-card average">
+            <div className="card-icon">📊</div>
+            <div className="card-content">
+              <h3>Moyenne par dépense</h3>
+              <p>
+                {filteredDepenses.length > 0 
+                  ? (totalAmount / filteredDepenses.length).toFixed(2) 
+                  : '0.00'} €
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form and Table Section */}
+        <div className="content-grid">
+          {/* Add Expense Form */}
+          <section className="form-section">
+            <div className="section-header">
+              <h3 className="section-title">
+                <span className="section-icon">➕</span>
+                Ajouter une dépense
+              </h3>
+            </div>
+            
+            <form onSubmit={ajouterDepense} className="expense-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Date</label>
+                  <input 
+                    type="date" 
+                    value={form.date}
+                    onChange={e => setForm({...form, date: e.target.value})}
+                    className="form-input"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Montant (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={form.amount}
+                    onChange={e => setForm({...form, amount: e.target.value})}
+                    className="form-input"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Description</label>
+                <input
+                  type="text"
+                  placeholder="Repas, transport, shopping..."
+                  value={form.description}
+                  onChange={e => setForm({...form, description: e.target.value})}
+                  className="form-input"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Catégorie</label>
+                {tags.length > 0 ? (
+                  <select
+                    value={form.tag}
+                    onChange={e => setForm({...form, tag: e.target.value})}
+                    className="form-input"
+                    required
+                  >
+                    <option value="">Sélectionner une catégorie</option>
+                    {tags.map(tag => (
+                      <option key={tag.id} value={tag.name}>
+                        {tag.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="Alimentation, loisirs..."
+                    value={form.tag}
+                    onChange={e => setForm({...form, tag: e.target.value})}
+                    className="form-input"
+                    required
+                  />
+                )}
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn-submit"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Enregistrement...' : 'Enregistrer la dépense'}
+              </button>
+            </form>
+          </section>
+
+          {/* Expenses Table */}
+          <section className="table-section">
+            <div className="section-header">
+              <h3 className="section-title">
+                <span className="section-icon">📜</span>
+                Historique des dépenses
+              </h3>
+              
+              <div className="tabs">
+                <button 
+                  className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('all')}
+                >
+                  Toutes
+                </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'recent' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('recent')}
+                >
+                  Récentes
+                </button>
+                {tags.slice(0, 3).map(tag => (
+                  <button 
+                    key={tag.id}
+                    className={`tab-btn ${activeTab === tag.name ? 'active' : ''}`}
+                    onClick={() => setActiveTab(tag.name)}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="table-container">
+              {isLoading ? (
+                <div className="loading-state">
+                  <div className="spinner"></div>
+                  <p>Chargement des dépenses...</p>
+                </div>
+              ) : filteredDepenses.length > 0 ? (
+                <table className="expenses-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                      <th>Montant</th>
+                      <th>Catégorie</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDepenses.map(depense => (
+                      <tr key={depense.id} className="expense-row">
+                        <td>
+                          <div className="date-cell">
+                            <span className="day">{new Date(depense.date).getDate()}</span>
+                            <span className="month">{new Date(depense.date).toLocaleString('fr-FR', { month: 'short' })}</span>
+                          </div>
+                        </td>
+                        <td>{depense.description}</td>
+                        <td className="amount-cell">
+                          <span className="amount">-{parseFloat(depense.amount).toFixed(2)} €</span>
+                        </td>
+                        <td>
+                          {depense.tags && depense.tags.length > 0 ? (
+                            <span 
+                              className="tag" 
+                              style={{ 
+                                backgroundColor: `${depense.tags[0].color}20`,
+                                color: depense.tags[0].color,
+                                border: `1px solid ${depense.tags[0].color}`
+                              }}
+                            >
+                              {depense.tags[0].name}
+                            </span>
+                          ) : (
+                            <span className="tag no-tag">Non catégorisé</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="actions-cell">
+                            <button className="btn-edit">
+                              <span className="icon">✏️</span>
+                            </button>
+                            <button 
+                              className="btn-delete"
+                              onClick={() => supprimerDepense(depense.id)}
+                            >
+                              <span className="icon">🗑️</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-icon">📭</div>
+                  <h4>Aucune dépense trouvée</h4>
+                  <p>Commencez par ajouter une nouvelle dépense</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -1,335 +1,398 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+import apiService from '../services/api';
+import './Tags.css';
 
-const colors = [
-  { bg: '#fee2e2', text: '#b91c1c' },   // rouge
-  { bg: '#dbeafe', text: '#1e40af' },   // bleu
-  { bg: '#d1fae5', text: '#065f46' },   // vert
-  { bg: '#fef3c7', text: '#92400e' },   // jaune
-  { bg: '#ede9fe', text: '#5b21b6' },   // violet
-  { bg: '#fce7f3', text: '#9d174d' },   // rose
-  { bg: '#e0f2fe', text: '#0369a1' },   // bleu clair
-  { bg: '#dcfce7', text: '#166534' },   // vert foncé
+// Palette de couleurs professionnelles
+const COLOR_PALETTE = [
+  { bg: '#FFEBEE', text: '#C62828', name: 'Rouge' },
+  { bg: '#F3E5F5', text: '#7B1FA2', name: 'Violet' },
+  { bg: '#E8EAF6', text: '#303F9F', name: 'Bleu foncé' },
+  { bg: '#E3F2FD', text: '#0277BD', name: 'Bleu clair' },
+  { bg: '#E0F7FA', text: '#00838F', name: 'Turquoise' },
+  { bg: '#E8F5E9', text: '#2E7D32', name: 'Vert' },
+  { bg: '#FFF8E1', text: '#F57F17', name: 'Jaune' },
+  { bg: '#FBE9E7', text: '#D84315', name: 'Orange' },
+  { bg: '#EFEBE9', text: '#4E342E', name: 'Marron' },
+  { bg: '#ECEFF1', text: '#37474F', name: 'Gris' },
 ];
 
 export default function Tags() {
   const [tags, setTags] = useState([]);
-  const [newTag, setNewTag] = useState('');
+  const [newTag, setNewTag] = useState({
+    name: '',
+    color: COLOR_PALETTE[0]
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editMode, setEditMode] = useState(null);
+  const [editTagData, setEditTagData] = useState({});
 
-  // Charger les tags depuis localStorage
+  // Charger les tags
   useEffect(() => {
-    const savedTags = localStorage.getItem('tags');
-    if (savedTags) {
-      setTags(JSON.parse(savedTags));
-    }
+    loadTags();
   }, []);
 
-  // Sauvegarder les tags dans localStorage
-  useEffect(() => {
-    localStorage.setItem('tags', JSON.stringify(tags));
-  }, [tags]);
+  const loadTags = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.getTags();
+      const processedTags = response.data.map(tag => ({
+        ...tag,
+        color: COLOR_PALETTE.find(c => c.text === tag.color) || COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)]
+      }));
+      setTags(processedTags);
+    } catch (error) {
+      console.error('Error loading tags:', error);
+      toast.error('Erreur de chargement des tags');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const ajouterTag = () => {
-    const nomTag = newTag.trim();
-    if (!nomTag) {
-      toast.error("Le nom du tag ne peut pas être vide");
+  const createTag = async () => {
+    if (!newTag.name.trim()) {
+      toast.error('Le nom du tag est requis');
       return;
     }
 
-    if (tags.some(tag => tag.nom.toLowerCase() === nomTag.toLowerCase())) {
-      toast.error("Ce tag existe déjà");
+    try {
+      setIsLoading(true);
+      const tagData = {
+        name: newTag.name.trim(),
+        color: newTag.color.text
+      };
+      
+      const response = await apiService.createTag(tagData);
+      const createdTag = {
+        ...response.data,
+        color: COLOR_PALETTE.find(c => c.text === response.data.color) || newTag.color
+      };
+      
+      setTags(prev => [...prev, createdTag]);
+      setNewTag({ name: '', color: COLOR_PALETTE[0] });
+      toast.success(`Tag "${createdTag.name}" créé`);
+    } catch (error) {
+      console.error('Error creating tag:', error);
+      toast.error(error.response?.data?.detail || 'Erreur de création');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateTag = async () => {
+    if (!editTagData.name.trim()) {
+      toast.error('Le nom du tag est requis');
       return;
     }
 
-    const couleur = colors[Math.floor(Math.random() * colors.length)];
-    setTags([...tags, { id: Date.now(), nom: nomTag, couleur }]);
-    setNewTag('');
-    toast.success(`Tag "${nomTag}" ajouté !`);
+    try {
+      setIsLoading(true);
+      const tagData = {
+        name: editTagData.name.trim(),
+        color: editTagData.color.text
+      };
+      
+      const response = await apiService.updateTag(editMode, tagData);
+      const updatedTag = {
+        ...response.data,
+        color: COLOR_PALETTE.find(c => c.text === response.data.color) || editTagData.color
+      };
+      
+      setTags(prev => prev.map(t => t.id === editMode ? updatedTag : t));
+      cancelEdit();
+      toast.success(`Tag "${updatedTag.name}" mis à jour`);
+    } catch (error) {
+      console.error('Error updating tag:', error);
+      toast.error(error.response?.data?.detail || 'Erreur de mise à jour');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const supprimerTag = (id) => {
-    const tagToDelete = tags.find(tag => tag.id === id);
-    setTags(tags.filter(tag => tag.id !== id));
-    toast.info(`Tag "${tagToDelete.nom}" supprimé`);
+  const deleteTag = async (id) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce tag ?')) return;
+
+    try {
+      setIsLoading(true);
+      await apiService.deleteTag(id);
+      setTags(prev => prev.filter(t => t.id !== id));
+      toast.info('Tag supprimé');
+    } catch (error) {
+      console.error('Error deleting tag:', error);
+      toast.error('Erreur de suppression');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const startEdit = (tag) => {
+    setEditMode(tag.id);
+    setEditTagData({
+      name: tag.name,
+      color: tag.color
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditMode(null);
+    setEditTagData({});
+  };
+
+  const filteredTags = tags.filter(tag =>
+    tag.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalUsage = tags.reduce((sum, tag) => sum + (tag.usage_count || 0), 0);
 
   return (
-    <>
-      <div className="container">
-        <h1 className="page-title">🏷️ Gestion des Tags</h1>
+    <div className="tags-app">
+      {/* Sidebar */}
+      <aside className="app-sidebar">
+        <div className="sidebar-header">
+          <h1 className="app-logo">
+            <span className="logo-icon">💰</span>
+            <span className="logo-text">BudgetZen</span>
+          </h1>
+          <p className="app-subtitle">Gestion financière intelligente</p>
+        </div>
 
-        <section className="form-section">
-          <h2 className="section-title">➕ Créer un nouveau tag</h2>
+        <nav className="sidebar-nav">
+          <Link to="/" className="nav-item">
+            <span className="nav-icon">🏠</span>
+            <span className="nav-text">Tableau de bord</span>
+          </Link>
+          <Link to="/depenses" className="nav-item">
+            <span className="nav-icon">💸</span>
+            <span className="nav-text">Dépenses</span>
+          </Link>
+          <Link to="/tags" className="nav-item active">
+            <span className="nav-icon">🏷️</span>
+            <span className="nav-text">Tags</span>
+          </Link>
+          <Link to="/analytics" className="nav-item">
+            <span className="nav-icon">📊</span>
+            <span className="nav-text">Analyses</span>
+          </Link>
+          <Link to="/budgets" className="nav-item">
+            <span className="nav-icon">🎯</span>
+            <span className="nav-text">Budgets</span>
+          </Link>
+        </nav>
 
-          <div className="form-row">
+        <div className="sidebar-footer">
+          <div className="user-profile">
+            <div className="avatar">👤</div>
+            <div className="user-info">
+              <span className="username">Votre Compte</span>
+              <span className="user-email">user@example.com</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="tags-content">
+        {/* Header */}
+        <header className="content-header">
+          <div className="header-title">
+            <h2>
+              <span className="title-icon">🏷️</span>
+              Gestion des Tags
+            </h2>
+            <p className="header-subtitle">
+              Organisez vos dépenses avec des tags personnalisés
+            </p>
+          </div>
+
+          <div className="header-actions">
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Rechercher des tags..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <span className="search-icon">🔍</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Stats Overview */}
+        <div className="stats-overview">
+          <div className="stat-card">
+            <div className="stat-icon">📊</div>
+            <div className="stat-info">
+              <h3>Tags actifs</h3>
+              <p>{tags.length}</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">🔗</div>
+            <div className="stat-info">
+              <h3>Utilisation totale</h3>
+              <p>{totalUsage}</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">🎨</div>
+            <div className="stat-info">
+              <h3>Couleurs disponibles</h3>
+              <p>{COLOR_PALETTE.length}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tag Creation Section */}
+        <section className="tag-creation">
+          <div className="section-header">
+            <h3 className="section-title">
+              {editMode ? '✏️ Modifier un tag' : '➕ Créer un nouveau tag'}
+            </h3>
+          </div>
+
+          <div className="creation-form">
             <div className="form-group">
-              <label className="input-label">Nom du tag</label>
+              <label>Nom du tag</label>
               <input
                 type="text"
                 placeholder="Ex: Alimentation, Transport..."
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                className="input-field"
-                onKeyDown={e => e.key === 'Enter' && ajouterTag()}
+                value={editMode ? editTagData.name : newTag.name}
+                onChange={(e) => 
+                  editMode 
+                    ? setEditTagData({...editTagData, name: e.target.value})
+                    : setNewTag({...newTag, name: e.target.value})
+                }
+                onKeyDown={(e) => e.key === 'Enter' && (editMode ? updateTag() : createTag())}
               />
             </div>
 
-            <button 
-              onClick={ajouterTag}
-              className="btn-primary"
-              aria-label="Créer le tag"
-            >
-              Créer le tag
-            </button>
+            <div className="form-group">
+              <label>Couleur</label>
+              <div className="color-picker">
+                {(editMode ? [editTagData.color] : [newTag.color]).map((color, idx) => (
+                  <div 
+                    key={idx}
+                    className="color-selection"
+                    style={{ backgroundColor: color.bg, color: color.text }}
+                  >
+                    {color.name}
+                  </div>
+                ))}
+                <div className="color-options">
+                  {COLOR_PALETTE.map((color, index) => (
+                    <button
+                      key={index}
+                      className="color-option"
+                      style={{ backgroundColor: color.bg, color: color.text }}
+                      onClick={() => 
+                        editMode
+                          ? setEditTagData({...editTagData, color})
+                          : setNewTag({...newTag, color})
+                      }
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="form-actions">
+              {editMode ? (
+                <>
+                  <button 
+                    className="btn-cancel"
+                    onClick={cancelEdit}
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    className="btn-save"
+                    onClick={updateTag}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+                  </button>
+                </>
+              ) : (
+                <button 
+                  className="btn-create"
+                  onClick={createTag}
+                  disabled={isLoading || !newTag.name.trim()}
+                >
+                  {isLoading ? 'Création...' : 'Créer le tag'}
+                </button>
+              )}
+            </div>
           </div>
         </section>
 
-        <section className="tags-section">
+        {/* Tags List Section */}
+        <section className="tags-list">
           <div className="section-header">
-            <h2 className="section-title">📌 Vos tags</h2>
-            {tags.length > 0 && (
-              <span className="tag-count">{tags.length} tag{tags.length > 1 ? 's' : ''}</span>
-            )}
+            <h3 className="section-title">📌 Vos tags</h3>
+            <span className="tags-count">
+              {filteredTags.length} tag{filteredTags.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
-          {tags.length > 0 ? (
+          {isLoading ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Chargement des tags...</p>
+            </div>
+          ) : filteredTags.length > 0 ? (
             <div className="tags-grid">
-              {tags.map(tag => (
+              {filteredTags.map(tag => (
                 <div 
                   key={tag.id} 
                   className="tag-card"
                   style={{ 
-                    backgroundColor: tag.couleur.bg, 
-                    color: tag.couleur.text,
-                    borderLeft: `4px solid ${tag.couleur.text}`
+                    backgroundColor: tag.color.bg,
+                    color: tag.color.text,
+                    borderLeft: `4px solid ${tag.color.text}`
                   }}
                 >
-                  <span className="tag-name">{tag.nom}</span>
-                  <button 
-                    onClick={() => supprimerTag(tag.id)}
-                    className="btn-delete"
-                    aria-label={`Supprimer le tag ${tag.nom}`}
-                    style={{ color: tag.couleur.text }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="tag-info">
+                    <h4 className="tag-name">{tag.name}</h4>
+                    {tag.usage_count > 0 && (
+                      <span className="tag-usage">
+                        Utilisé {tag.usage_count} fois
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="tag-actions">
+                    <button 
+                      className="btn-edit"
+                      onClick={() => startEdit(tag)}
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      className="btn-delete"
+                      onClick={() => deleteTag(tag.id)}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="empty-state">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v14.25A2.25 2.25 0 005.25 22h13.5A2.25 2.25 0 0021 19.75V9.568m-18 0A2.25 2.25 0 015.25 7h13.5A2.25 2.25 0 0121 9.568m-18 0V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v2.818" />
-              </svg>
-              <p>Vous n'avez pas encore créé de tags</p>
+              <div className="empty-icon">🏷️</div>
+              <h4>Aucun tag trouvé</h4>
+              <p>
+                {searchTerm 
+                  ? 'Aucun tag ne correspond à votre recherche'
+                  : 'Commencez par créer votre premier tag'}
+              </p>
             </div>
           )}
         </section>
-      </div>
-
-      <style jsx>{`
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-        
-        html, body, #root {
-          height: 100%;
-          width: 100%;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background-color: #f8fafc;
-          color: #1e293b;
-        }
-        
-        .container {
-          min-height: 100vh;
-          width: 100%;
-          padding: 3rem 1.5rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          margin: 0 auto;
-          max-width: 1200px;
-        }
-        
-        .page-title {
-          font-size: 3rem;
-          font-weight: 800;
-          color: #2563eb;
-          margin-bottom: 2.5rem;
-          text-align: center;
-          letter-spacing: -0.025em;
-          line-height: 1.2;
-        }
-        
-        .section-title {
-          font-size: 1.75rem;
-          font-weight: 700;
-          color: #1e40af;
-        }
-        
-        .form-section, .tags-section {
-          background: white;
-          border-radius: 1rem;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-          padding: 2rem;
-          width: 100%;
-          margin-bottom: 2rem;
-        }
-        
-        .form-row {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        
-        @media(min-width: 640px) {
-          .form-row {
-            flex-direction: row;
-            align-items: flex-end;
-          }
-        }
-        
-        .form-group {
-          flex-grow: 1;
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .input-label {
-          font-weight: 600;
-          margin-bottom: 0.5rem;
-          color: #334155;
-          font-size: 1rem;
-        }
-        
-        .input-field {
-          padding: 0.75rem 1rem;
-          border: 2px solid #e2e8f0;
-          border-radius: 0.5rem;
-          font-size: 1rem;
-          transition: all 0.2s ease;
-          outline: none;
-          width: 100%;
-        }
-        
-        .input-field:focus {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        .btn-primary {
-          background-color: #2563eb;
-          color: white;
-          padding: 0.75rem 1.5rem;
-          border: none;
-          border-radius: 0.5rem;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-          height: fit-content;
-        }
-        
-        .btn-primary:hover {
-          background-color: #1e40af;
-          transform: translateY(-1px);
-        }
-        
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-        }
-        
-        .tag-count {
-          font-size: 0.875rem;
-          color: #64748b;
-          background: #f1f5f9;
-          padding: 0.25rem 0.75rem;
-          border-radius: 9999px;
-        }
-        
-        .tags-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-          gap: 1rem;
-        }
-        
-        .tag-card {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 1.25rem;
-          border-radius: 0.5rem;
-          font-weight: 600;
-          transition: all 0.2s ease;
-          cursor: default;
-        }
-        
-        .tag-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .tag-name {
-          overflow-wrap: anywhere;
-          padding-right: 0.5rem;
-        }
-        
-        .btn-delete {
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0.25rem;
-          border-radius: 0.25rem;
-          transition: all 0.2s ease;
-          opacity: 0.7;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .btn-delete:hover {
-          opacity: 1;
-          background-color: rgba(0, 0, 0, 0.05);
-        }
-        
-        .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem;
-          color: #94a3b8;
-          text-align: center;
-          gap: 1rem;
-        }
-        
-        .empty-state p {
-          font-size: 1.125rem;
-          max-width: 300px;
-        }
-        
-        @media (max-width: 768px) {
-          .container {
-            padding: 2rem 1rem;
-          }
-          
-          .page-title {
-            font-size: 2.25rem;
-          }
-          
-          .form-section, .tags-section {
-            padding: 1.5rem;
-          }
-        }
-      `}</style>
-    </>
+      </main>
+    </div>
   );
 }
