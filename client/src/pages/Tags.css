@@ -1,0 +1,817 @@
+/* ===== CSS SPÉCIFIQUE À LA PAGE TAGS UNIQUEMENT ===== */
+
+/* Conteneur principal de la page tags */
+.tags-app {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.tags-app::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 48, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(255, 0, 128, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== SIDEBAR SPÉCIFIQUE TAGS ===== */
+.tags-app .app-sidebar {
+  width: 300px;
+  min-width: 300px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.tags-app .sidebar-header {
+  padding: 2.5rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.tags-app .sidebar-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: shimmer-tags 3s ease-in-out infinite;
+}
+
+@keyframes shimmer-tags {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  50% { transform: translate(-50%, -50%) rotate(180deg); }
+}
+
+.tags-app .app-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.tags-app .logo-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+}
+
+.tags-app .logo-text {
+  letter-spacing: -0.5px;
+  color: #000000;
+}
+
+.tags-app .app-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+}
+
+.tags-app .sidebar-nav {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+.tags-app .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 2rem;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  margin: 0.5rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.tags-app .nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #667eea, #764ba2);
+  border-radius: 0 3px 3px 0;
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.tags-app .nav-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+  color: #4f46e5;
+  transform: translateX(6px);
+}
+
+.tags-app .nav-item:hover::before {
+  transform: scaleY(1);
+}
+
+.tags-app .nav-item.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+  transform: translateX(6px);
+}
+
+.tags-app .nav-item.active::before {
+  transform: scaleY(1);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.tags-app .nav-icon {
+  font-size: 1.5rem;
+  width: 28px;
+  text-align: center;
+}
+
+.tags-app .nav-text {
+  font-size: 0.95rem;
+}
+
+.tags-app .sidebar-footer {
+  padding: 2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(248, 250, 252, 0.9);
+  backdrop-filter: blur(10px);
+}
+
+.tags-app .user-profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tags-app .avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.tags-app .user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tags-app .username {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.tags-app .user-email {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* ===== CONTENU PRINCIPAL TAGS ===== */
+.tags-app .tags-content {
+  flex: 1;
+  padding: 2.5rem;
+  overflow-y: auto;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+}
+
+/* Custom scrollbar pour le contenu */
+.tags-app .tags-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tags-app .tags-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.tags-app .tags-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+.tags-app .tags-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6b4c91 100%);
+}
+
+/* ===== HEADER TAGS ===== */
+.tags-app .content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  padding: 2.5rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+}
+
+.tags-app .header-title h2 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  letter-spacing: -1px;
+}
+
+.tags-app .title-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
+}
+
+.tags-app .header-subtitle {
+  color: #64748b;
+  font-size: 1.2rem;
+  margin-left: 4rem;
+  font-weight: 500;
+}
+
+.tags-app .header-actions {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.tags-app .search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tags-app .search-bar input {
+  width: 380px;
+  padding: 1rem 1.25rem 1rem 3.5rem;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 16px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(15px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+}
+
+.tags-app .search-bar input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.12);
+  background: white;
+}
+
+.tags-app .search-bar input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.tags-app .search-icon {
+  position: absolute;
+  left: 1.25rem;
+  color: #64748b;
+  font-size: 1.25rem;
+}
+
+/* ===== STATISTIQUES TAGS ===== */
+.tags-app .stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.tags-app .stat-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  padding: 2rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.tags-app .stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.tags-app .stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.18);
+}
+
+.tags-app .stat-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: white;
+  box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+
+.tags-app .stat-info h3 {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.tags-app .stat-info p {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+/* ===== SECTIONS TAGS ===== */
+.tags-app .tag-creation,
+.tags-app .tags-list {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  margin-bottom: 2.5rem;
+  overflow: hidden;
+}
+
+.tags-app .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tags-app .section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tags-app .tags-count {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+/* ===== FORMULAIRE TAGS ===== */
+.tags-app .creation-form {
+  padding: 2.5rem;
+}
+
+.tags-app .form-group {
+  margin-bottom: 2rem;
+}
+
+.tags-app .form-group label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.tags-app .form-group input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.tags-app .form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.12);
+  background: white;
+}
+
+.tags-app .form-group input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* ===== SÉLECTEUR DE COULEUR TAGS ===== */
+.tags-app .color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tags-app .color-selection {
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 1.1rem;
+}
+
+.tags-app .color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tags-app .color-option {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.tags-app .color-option:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.tags-app .color-option::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tags-app .color-option:hover::after {
+  opacity: 1;
+}
+
+/* ===== BOUTONS TAGS ===== */
+.tags-app .form-actions {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.tags-app .btn-create,
+.tags-app .btn-save,
+.tags-app .btn-cancel {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tags-app .btn-create,
+.tags-app .btn-save {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.tags-app .btn-create:hover,
+.tags-app .btn-save:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+}
+
+.tags-app .btn-create:disabled,
+.tags-app .btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tags-app .btn-cancel {
+  background: #f8fafc;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.tags-app .btn-cancel:hover {
+  background: #e2e8f0;
+  color: #374151;
+  transform: translateY(-2px);
+}
+
+/* ===== GRILLE DES TAGS ===== */
+.tags-app .tags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 2.5rem;
+}
+
+.tags-app .tag-card {
+  padding: 2rem;
+  border-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+
+.tags-app .tag-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+  pointer-events: none;
+}
+
+.tags-app .tag-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.25);
+}
+
+.tags-app .tag-info {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 1.5rem;
+}
+
+.tags-app .tag-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.tags-app .tag-usage {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+.tags-app .tag-actions {
+  display: flex;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.tags-app .btn-edit,
+.tags-app .btn-delete {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(15px);
+  font-size: 1.1rem;
+}
+
+.tags-app .btn-edit:hover {
+  background: rgba(59, 130, 246, 0.25);
+  transform: scale(1.15);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.tags-app .btn-delete:hover {
+  background: rgba(239, 68, 68, 0.25);
+  transform: scale(1.15);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+/* ===== ÉTATS VIDES ET CHARGEMENT TAGS ===== */
+.tags-app .loading-state,
+.tags-app .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.tags-app .spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e5e7eb;
+  border-left: 5px solid #667eea;
+  border-radius: 50%;
+  animation: spin-tags 1s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin-tags {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tags-app .empty-icon {
+  font-size: 5rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.6;
+}
+
+.tags-app .empty-state h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #374151;
+}
+
+.tags-app .empty-state p {
+  font-size: 1rem;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* ===== RESPONSIVE POUR TAGS ===== */
+@media (max-width: 1200px) {
+  .tags-app .app-sidebar {
+    width: 260px;
+    min-width: 260px;
+  }
+  
+  .tags-app .search-bar input {
+    width: 300px;
+  }
+  
+  .tags-app .tags-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .tags-app {
+    flex-direction: column;
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .tags-app .app-sidebar {
+    width: 100%;
+    height: auto;
+    order: 2;
+  }
+  
+  .tags-app .sidebar-nav {
+    display: flex;
+    overflow-x: auto;
+    padding: 1.5rem 0;
+  }
+  
+  .tags-app .nav-item {
+    flex-shrink: 0;
+    margin: 0 0.75rem;
+    min-width: 120px;
+  }
+  
+  .tags-app .tags-content {
+    order: 1;
+    padding: 1.5rem;
+    height: auto;
+  }
+  
+  .tags-app .content-header {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  
+  .tags-app .search-bar input {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .tags-app .stats-overview {
+    grid-template-columns: 1fr;
+  }
+  
+  .tags-app .tags-grid {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .tags-app .tags-content {
+    padding: 1rem;
+  }
+  
+  .tags-app .content-header,
+  .tags-app .tag-creation,
+  .tags-app .tags-list {
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .tags-app .creation-form,
+  .tags-app .section-header {
+    padding: 1.5rem;
+  }
+  
+  .tags-app .form-actions {
+    flex-direction: column;
+  }
+  
+  .tags-app .header-title h2 {
+    font-size: 2rem;
+  }
+  
+  .tags-app .title-icon {
+    font-size: 2.5rem;
+  }
+  
+  .tags-app .color-options {
+    justify-content: center;
+  }
+  
+  .tags-app .search-bar input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+  }
+}
