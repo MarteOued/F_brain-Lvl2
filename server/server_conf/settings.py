@@ -132,11 +132,11 @@ WSGI_APPLICATION = 'server_conf.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django_prometheus.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',  
-        'PORT': '5432',
+        'NAME': os.environ.get('POSTGRES_DB', 'postgres'),
+        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'db'),  # 'db' reste la valeur par défaut !
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
 
