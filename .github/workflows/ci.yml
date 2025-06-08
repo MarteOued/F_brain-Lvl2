@@ -5,7 +5,7 @@ on:
   push:
     branches: [ dev, feature/* ]
   pull_request:
-    branches: [ master ]
+    branches: [ dev, master ]
 
 jobs:
   # JOB 1: Tester le backend Django
