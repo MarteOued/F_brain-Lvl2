@@ -14,6 +14,7 @@ __pycache__/
 
 # Ignore les fichiers d’environnement
 .env
+server/venv/
 
 # Ignore les dossiers de l'éditeur
 .vscode/
