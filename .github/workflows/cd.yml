@@ -31,8 +31,8 @@ jobs:
 
     - name: "🏗️ Build de toutes les images"
       run: |
-        # Construire toutes les images sans les lancer
-        docker-compose build
+        # ✅ CORRECTION: Utiliser la nouvelle syntaxe Docker Compose
+        docker compose build
         echo "✅ Toutes les images sont construites !"
         
         # Optionnel : Les taguer pour Docker Hub
@@ -57,8 +57,8 @@ jobs:
       run: |
         echo "🚀 Simulation du déploiement..."
         
-        # Lancer tout le stack
-        docker-compose up -d
+        # ✅ CORRECTION: Utiliser la nouvelle syntaxe Docker Compose
+        docker compose up -d
         
         # Attendre que tout soit prêt
         echo "⏳ Attente que les services démarrent..."
@@ -90,8 +90,8 @@ jobs:
         
         echo "🏁 Simulation terminée !"
         
-        # Nettoyer
-        docker-compose down
+        # ✅ CORRECTION: Utiliser la nouvelle syntaxe Docker Compose
+        docker compose down
 
   # JOB 3: Notification (optionnel)
   notify:
@@ -133,5 +133,6 @@ jobs:
 #        script: |
 #          cd /path/to/your/app
 #          git pull origin main
-#          docker-compose down
-#          docker-compose up -d
+#          # ✅ CORRECTION: Utiliser la nouvelle syntaxe Docker Compose
+#          docker compose down
+#          docker compose up -d
