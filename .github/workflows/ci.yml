@@ -58,7 +58,6 @@ jobs:
         if [ -f requirements.txt ]; then
           pip install -r requirements.txt
         else
-          # ✅ CORRECTION 1: Ajouter pika pour RabbitMQ
           pip install django psycopg2-binary celery pika
         fi
 
@@ -82,34 +81,9 @@ jobs:
       run: |
         cd server
         echo "🔗 Test de connexion à la base..."
-        python -c "
-        import os
-        import psycopg2
-        try:
-            conn = psycopg2.connect(
-                host='localhost',
-                port=5432,
-                database='test_db',
-                user='postgres',
-                password='postgres'
-            )
-            print('✅ Connexion PostgreSQL OK')
-            conn.close()
-        except Exception as e:
-            print(f'❌ Erreur connexion: {e}')
-            exit(1)
-        "
+        python -c "import os; import psycopg2; conn = psycopg2.connect(host='localhost', port=5432, database='test_db', user='postgres', password='postgres'); print('✅ Connexion PostgreSQL OK'); conn.close()"
         echo "🔗 Test de connexion RabbitMQ..."
-        python -c "
-        import pika
-        try:
-            connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-            print('✅ Connexion RabbitMQ OK')
-            connection.close()
-        except Exception as e:
-            print(f'❌ Erreur RabbitMQ: {e}')
-            exit(1)
-        "
+        python -c "import pika; connection = pika.BlockingConnection(pika.ConnectionParameters('localhost')); print('✅ Connexion RabbitMQ OK'); connection.close()"
         echo "🗃️ Migration de la base..."
         python manage.py migrate
         echo "🧪 Lancement des tests..."
@@ -169,28 +143,11 @@ jobs:
     - name: "📥 Récupération du code"
       uses: actions/checkout@v4
 
-    # ✅ CORRECTION 2: Ajouter l'installation de PyYAML
-    - name: "🐍 Installation Python et dépendances"
-      run: |
-        python -m pip install --upgrade pip
-        pip install PyYAML
-
     - name: "🔧 Vérification config Prometheus"
       run: |
         if [ -f monitoring/prometheus.yml ]; then
           echo "✅ Fichier prometheus.yml trouvé"
-          # ✅ CORRECTION 2: Corriger l'indentation Python
-          python -c "
-import yaml
-try:
-    with open('monitoring/prometheus.yml', 'r') as f:
-        config = yaml.safe_load(f)
-    print('✅ Configuration Prometheus valide')
-    print(f'Nombre de jobs configurés: {len(config.get(\"scrape_configs\", []))}')
-except Exception as e:
-    print(f'❌ Erreur config Prometheus: {e}')
-    exit(1)
-          "
+          python -c "import yaml; f = open('monitoring/prometheus.yml', 'r'); config = yaml.safe_load(f); print('✅ Configuration Prometheus valide'); print(f'Nombre de jobs configurés: {len(config.get(\"scrape_configs\", []))}')"
         else
           echo "❌ Fichier prometheus.yml manquant"
           exit 1
@@ -252,7 +209,7 @@ except Exception as e:
     name: "🐳 Test Docker Compose Complet"
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend, test-monitoring]
-    if: always() # Force l'exécution même si les jobs précédents échouent
+    if: always()
 
     steps:
     - name: "📥 Récupération du code"
@@ -260,10 +217,7 @@ except Exception as e:
 
     - name: "🔧 Préparation environnement"
       run: |
-        # Créer les fichiers manquants si nécessaire
         mkdir -p monitoring
-        
-        # Créer un prometheus.yml minimal si absent
         if [ ! -f monitoring/prometheus.yml ]; then
           cat > monitoring/prometheus.yml << EOF
         global:
@@ -274,8 +228,7 @@ except Exception as e:
               - targets: ['localhost:9090']
         EOF
         fi
-        
-        # Créer un grafana.ini minimal si absent
+
         if [ ! -f monitoring/grafana.ini ]; then
           cat > monitoring/grafana.ini << EOF
         [security]
@@ -287,44 +240,32 @@ except Exception as e:
     - name: "🐳 Validation Docker Compose"
       run: |
         echo "🔧 Vérification de la configuration Docker Compose..."
-        # ✅ CORRECTION 3: Utiliser la nouvelle syntaxe Docker Compose
         docker compose config
         echo "✅ Docker Compose est valide !"
 
     - name: "🏗️ Build des images"
       run: |
         echo "🏗️ Build de toutes les images..."
-        # ✅ CORRECTION 3: Utiliser la nouvelle syntaxe Docker Compose
         docker compose build --no-cache --parallel
         echo "✅ Toutes les images se buildent correctement !"
 
     - name: "🚀 Test de démarrage rapide"
       run: |
         echo "🚀 Test de démarrage des services..."
-        # Démarrer seulement les services essentiels pour le test
-        # ✅ CORRECTION 3: Utiliser la nouvelle syntaxe Docker Compose
         docker compose up -d db rabbitmq
-        
         echo "⏳ Attente initialisation base (30s)..."
         sleep 30
-        
-        # Vérifier que les services sont healthy
         docker compose ps
-        
-        echo "🩺 Vérification santé des services..."
         docker compose exec -T db pg_isready -U postgres || echo "DB pas encore prête"
         docker compose exec -T rabbitmq rabbitmqctl status || echo "RabbitMQ pas encore prêt"
-        
         echo "🛑 Nettoyage..."
         docker compose down -v
-        
         echo "✅ Test Docker Compose réussi !"
 
     - name: "🧹 Nettoyage final"
       if: always()
       run: |
         echo "🧹 Nettoyage des ressources Docker..."
-        # ✅ CORRECTION 3: Utiliser la nouvelle syntaxe Docker Compose
         docker compose down -v --remove-orphans || true
         docker system prune -f || true
         echo "✅ Nettoyage terminé !"
